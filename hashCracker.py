@@ -1,195 +1,62 @@
-import hashlib, time
+import hashlib, time, os, argparse
 
-modes = ['md5', 'sha1', 'sha256']
-mode_names = {'md5':'MD5', 'sha1':'SHA-1', 'sha256':'SHA-256'}
-
-
-def runInteractive():
-    user_mode = input('''\
-Please enter hashing algorithm (md5, sha1, sha256)''').lower()
-    if user_mode in modes:
-        print('%s algorithm selected, continuing' % mode_names[user_mode])
-        return user_mode
-    else:
-        user_mode = input('''\
-Error: %s an invalid selection
-Please enter hashing algorithm (md5, sha1, sha256)''' % user_mode).lower()
-    pass
+alg_keys = ['md5', 'sha1', 'sha256']
+alg_names = {'md5':'MD5', 'sha1':'SHA-1', 'sha256':'SHA-256'}
+algs = {
+        alg_keys[0]: hashlib.md5,
+        alg_keys[1]: hashlib.sha1,
+        alg_keys[2]: hashlib.sha256 }
 
 
-if __name__ == '__main__':
-    import os, argparse
+parser = argparse.ArgumentParser()
+parser.add_argument(
+        '-a', '--algorithm', choices=alg_keys, required=True,
+        help='Hashing algorithm to use')
+parser.add_argument(
+        '-wf', '--wordfile', required=True,
+        help='World file path')
+parser.add_argument(
+        '-hf', '--hashfile', required=True,
+        help='Hash file path')
+args = parser.parse_args()
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-            '-I', '--interactive', action='store_true',
-            help='Run in interactive mode')
-    parser.add_argument(
-            '-m', '--mode', choices=modes,
-            help='Hashing algorithm to use')
-    parser.add_argument(
-            'wordfile', metavar='wf', nargs='+',
-            help='Paths of word files')
-    args = parser.parse_args()
 
-    if args.interactive:
-        runInteractive()
-    else:
-        pass
+alg = algs[args.algorithm]
+unsolved = list(map(str.strip, open(args.hashfile, 'r').readlines()))
+solved = []
 
-    exit()
-
-    
-
-def promptPickMode():
-    userMode = ""
-    while userMode not in modes:
-        userMode = input('\nError, please enter the hashing algorithm you want to use (md5, sha1, sha256)')
-        if userMode == "md5":
-            print("MD5 algorithm selected, continuing")
-            return userMode
+with open(args.wordfile, 'r', -1, 'utf8', 'ignore') as wordfile:
+    start = time.time()
+    for word in wordfile:
+        word = word.strip()
+        _alg = alg()
+        _alg.update(word.encode('utf-8'))
+        hashed = _alg.hexdigest()
+        i = 0
+        while i < len(unsolved):
+            if hashed == unsolved[i]:
+                solved += [(unsolved.pop(i), word)]
+            i += 1
+        if len(unsolved) == 0:
             break
-        elif userMode == "sha1":
-            print("SHA-1 selected, continuing")
-            return userMode
-            break
-        elif userMode == "sha256":
-            print("SHA-256 selected, continuing")
-            return userMode
-            break
-    
+    end = time.time()
 
-attempt1 = getMode()
-attempt2 = None
+_solved = str.join('\n\n', [f'''\
+    Hashed: {hashed}
+    String: {cracked}''' for hashed, cracked in solved])
+_unsolved = str.join('\n\n', [f'''\
+    Hashed: {hashed}''' for hashed in unsolved])
 
-if attempt1 == None:
-    while attempt2 == None:
-        attempt2 = promptPickMode()
+print(f'''\
+Algorithm: {alg_names[args.algorithm]}
+Wordlist: {args.wordfile}
+Time: {end-start:.3f} seconds''')
+if _solved:
+    print(f'''\
+Solved hashes:
+{_solved}''')
+if _unsolved:
+    print(f'''\
+Unsolved hashes:
+{_unsolved}''')
 
-# get user wordlist and lastline of the file (ptwResults[0] = wlPath & ptwResults[1] = wlLastLine
-ptwResults = []
-def pathToWordlist():
-    wlPath = input("\nPlease copy and paste the path to your wordlist ")
-    ptwResults.append(wlPath)
-
-    with open(wlPath, "r", encoding="utf-8", errors="ignore") as file:
-        for line in file:
-            pass
-        last = line
-        ptwResults.append(last)
-                    
-
-pathToWordlist()
-
-wlPath = ptwResults[0]
-wlLastLine = ptwResults[1]
-wlLastLine = wlLastLine.strip()
-print("Obtained wordlist {}".format(os.path.basename(wlPath)))
-        
-def userHash():
-    userHash = input("\nPlease enter all of your hashes separated by a comma (no spaces) ")
-    userHash = userHash.split(",")
-    return userHash
-
-userHash = userHash()
-
-# various hashing algs    
-def makeMd5Hash(string):
-    string = string.encode("utf-8")
-    m = hashlib.md5()
-    m.update(string)
-
-    currentHash = m.hexdigest()
-    return currentHash
-
-def makeSha1Hash(string):
-    string = string.encode("utf-8")
-    m = hashlib.sha1()
-    m.update(string)
-
-    currentHash = m.hexdigest()
-    return currentHash
-
-def makeSha256Hash(string):
-    string = string.encode("utf-8")
-    m = hashlib.sha256()
-    m.update(string)
-
-    currentHash = m.hexdigest()
-    return currentHash
-
-# compares hashes with user-provided algorithm
-def compareHash():
-    print("\nComparing {} hash(es) to selected wordlist".format(len(userHash)))
-
-    def initHashes():
-        solvedHashes = []
-        unsolvedHashes = []
-        totalTimes = []
-        for i in userHash:
-            start = time.time()
-            with open(wlPath, "r", encoding="utf8", errors="ignore") as wordlist:
-                for lineWord in wordlist:
-                    lineWord = lineWord.strip()
-
-                    if attempt1 == "md5" or attempt2 == "md5":
-                        alg = "MD5"
-                        lineHash = makeMd5Hash(lineWord)   
-                    elif attempt1 == "sha1" or attempt2 == "sha1":
-                        alg = "SHA-1"
-                        lineHash = makeSha1Hash(lineWord)
-                    elif attempt1 == "sha256" or attempt2 == "sha256":
-                        alg = "SHA-256"
-                        lineHash = makeSha256Hash(lineWord)
-
-                    if i == lineHash:
-                            
-                            pos = userHash.index(i)
-                            end = time.time()
-                            allTime = end - start
-                            print("Process took {} seconds".format(allTime))
-                            print("***ALERT*** HASH {}  CRACKED WITH STRING\n{}\n".format(userHash[pos],lineWord))
-
-                            solvedHashes.append((i,lineHash,lineWord,allTime))
-                            totalTimes.append(float(allTime))
-                            break
-                       
-                    elif lineWord == wlLastLine:
-                        if i != lineHash:
-                                end = time.time()
-                                allTime = end - start
-                                totalTimes.append(float(allTime))
-                                pos = userHash.index(i)
-                                print("Error, hash {} not found ({} seconds)".format(userHash[pos], allTime))
-                                unsolvedHashes.append(i)
-                                
-                                break
-                    else:
-                              pass
-
-        if len(solvedHashes) + len(unsolvedHashes) == len(userHash):
-            print("\n\n********************************************")
-            print("Algorithm: {}".format(alg))
-            print("Wordlist: {}".format(os.path.basename(wlPath)))
-            print("Solved Hashes: {}\n".format(len(solvedHashes)))
-            for i in range(len(solvedHashes)):
-                print("Your Hash: {}".format(solvedHashes[i][0]))
-                print("Solved Hash: {}".format(solvedHashes[i][1]))
-                print("Solved String: {}".format(solvedHashes[i][2]))
-                print("Time Taken: {} seconds\n".format(solvedHashes[i][3]))
-                
-            print("Unsolved Hashes: {}".format(len(unsolvedHashes)))
-            for i in range(len(unsolvedHashes)):
-                print("Hash: {}".format(unsolvedHashes[int(i)]))
-            print("********************************************\n")
-
-            totalTime = 0        
-            for i in totalTimes:
-                totalTime = totalTime + i
-            print("\nAll together, cracking took {} seconds".format(totalTime))
-                        
-    initHashes()
-        
-compareHash()
-
-    
