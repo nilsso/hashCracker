@@ -1,6 +1,45 @@
-import hashlib, time, os
+import hashlib, time
 
-modes = ["md5", "sha1", "sha256"]
+modes = ['md5', 'sha1', 'sha256']
+mode_names = {'md5':'MD5', 'sha1':'SHA-1', 'sha256':'SHA-256'}
+
+
+def runInteractive():
+    user_mode = input('''\
+Please enter hashing algorithm (md5, sha1, sha256)''').lower()
+    if user_mode in modes:
+        print('%s algorithm selected, continuing' % mode_names[user_mode])
+        return user_mode
+    else:
+        user_mode = input('''\
+Error: %s an invalid selection
+Please enter hashing algorithm (md5, sha1, sha256)''' % user_mode).lower()
+    pass
+
+
+if __name__ == '__main__':
+    import os, argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+            '-I', '--interactive', action='store_true',
+            help='Run in interactive mode')
+    parser.add_argument(
+            '-m', '--mode', choices=modes,
+            help='Hashing algorithm to use')
+    parser.add_argument(
+            'wordfile', metavar='wf', nargs='+',
+            help='Paths of word files')
+    args = parser.parse_args()
+
+    if args.interactive:
+        runInteractive()
+    else:
+        pass
+
+    exit()
+
+    
 
 def promptPickMode():
     userMode = ""
@@ -18,18 +57,6 @@ def promptPickMode():
             print("SHA-256 selected, continuing")
             return userMode
             break
-        
-def getMode():   
-    user_mode = ''
-    user_mode = input('Please enter hashing algorithm (md5, sha1, sha256) ').lower()
-    while user_mode not in modes:
-        if user_mode in modes:
-            print('%s algorithm selected, continuing' % mode_names[user_mode])
-            return user_mode
-        else:
-            user_mode = input('''\
-Error: %s an invalid selection
-Please enter hashing algorithm (md5, sha1, sha256) ''' % user_mode).lower()
     
 
 attempt1 = getMode()
