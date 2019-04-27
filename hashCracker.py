@@ -20,16 +20,16 @@ def promptPickMode():
             break
         
 def getMode():   
-    userMode = input("Please enter hashing algorithm (md5, sha1, sha256) ").lower()
-    if userMode == "md5":
-        print("MD5 algorithm selected, continuing")
-        return userMode
-    elif userMode == "sha1":
-        print("SHA-1 selected, continuing")
-        return userMode
-    elif userMode == "sha256":
-        print("SHA-256 selected, continuing")
-        return userMode
+    user_mode = ''
+    user_mode = input('Please enter hashing algorithm (md5, sha1, sha256) ').lower()
+    while user_mode not in modes:
+        if user_mode in modes:
+            print('%s algorithm selected, continuing' % mode_names[user_mode])
+            return user_mode
+        else:
+            user_mode = input('''\
+Error: %s an invalid selection
+Please enter hashing algorithm (md5, sha1, sha256) ''' % user_mode).lower()
     
 
 attempt1 = getMode()
