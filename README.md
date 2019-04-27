@@ -7,9 +7,9 @@ Introduction from [1fge/hashCracker][orig]:
 > which must be in the hashCracker folder. However, I plan on adding more
 > algorithms and implementing the use of custom wordlists in later versions.
 
-# Usage:
+<!--## Usage:-->
 
-# Example usage:
+<!--## Example usage:-->
 
 [orig]: https://github.com/1fge/hashCracker
 
